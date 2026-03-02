@@ -1,4 +1,4 @@
-export const revalidate = 5;
+import RefreshButton from "./refresh-button";
 
 interface Joke {
   type: "single" | "twopart";
@@ -7,15 +7,20 @@ interface Joke {
   delivery?: string;
 }
 
-async function getJoke(): Promise<Joke> {
-  const res = await fetch("https://v2.jokeapi.dev/joke/Any?safe-mode", {
-    next: { revalidate: 10 },
-  });
+async function getJoke(url: string): Promise<Joke> {
+  "use cache";
+  const res = await fetch(url);
   return res.json();
 }
 
-export default async function Home() {
-  const joke = await getJoke();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ seed?: string }>;
+}) {
+  const { seed = "init" } = await searchParams;
+  const url = `https://v2.jokeapi.dev/joke/Any?safe-mode&cachebust=${seed}`;
+  const joke = await getJoke(url);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -37,9 +42,7 @@ export default async function Home() {
             </p>
           </div>
         )}
-        <p className="text-xs text-zinc-400 dark:text-zinc-600">
-          Refreshes every 30 seconds
-        </p>
+        <RefreshButton />
       </main>
     </div>
   );
